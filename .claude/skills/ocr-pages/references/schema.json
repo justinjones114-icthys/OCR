@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ocr-pages page record",
+  "description": "One JSON file per physical page, named page-<folio>.json.",
+  "type": "object",
+  "required": ["source", "order", "blocks"],
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "type": "string",
+      "description": "Filename of the photograph this page came from."
+    },
+    "side": {
+      "type": ["string", "null"],
+      "enum": ["L", "R", null],
+      "description": "Which half of a spread. null for single-page photos."
+    },
+    "folio": {
+      "type": ["integer", "string", "null"],
+      "description": "The page number printed on the page, which is the page's real identity. null when the page carries none (chapter openers usually don't). Roman numerals stay strings."
+    },
+    "order": {
+      "type": "integer",
+      "description": "Position in the capture sequence. Used to sort when folio is missing or unreliable."
+    },
+    "blocks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/block" }
+    }
+  },
+  "$defs": {
+    "block": {
+      "type": "object",
+      "required": ["type", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "running_head",
+            "folio",
+            "heading",
+            "paragraph",
+            "block_quote",
+            "note",
+            "caption",
+            "figure"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "description": "Verbatim text. May contain only: <em>, <strong>, <br>, <sub>, <sup>, <span class=\"sc\">, and <sup class=\"noteref\" data-n=\"N\">N</sup>. Escape literal & < > characters."
+        },
+        "n": {
+          "type": "integer",
+          "description": "For type 'note' only: the note's number, so references can link to it."
+        },
+        "continued": {
+          "type": "boolean",
+          "description": "This block finishes a paragraph begun on the previous page."
+        },
+        "continues": {
+          "type": "boolean",
+          "description": "This block is interrupted by the page break and resumes on the next page."
+        },
+        "uncertain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Exact substrings of `text` that were hard to read. Each is underlined in the rendered HTML so a reviewer knows where to check the photograph. Prefer listing a doubtful reading over silently committing to it."
+        }
+      }
+    }
+  }
+}

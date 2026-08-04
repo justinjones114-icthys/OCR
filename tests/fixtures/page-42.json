@@ -1,0 +1,19 @@
+{
+  "source": "FIXTURE-0001.jpg",
+  "side": "L",
+  "folio": 42,
+  "order": 1,
+  "blocks": [
+    { "type": "running_head", "text": "THE ART OF GLASSMAKING" },
+    { "type": "folio", "text": "42" },
+    { "type": "paragraph", "continued": true,
+      "text": "seldom survives the second firing, and the workshops of Murano guarded the ratio jealously.<sup class=\"noteref\" data-n=\"17\">17</sup> What follows is drawn from the guild records." },
+    { "type": "paragraph",
+      "text": "The crucible must be self-supporting before the batch is charged; a cracked wall will not announce itself until the melt is already running. Vitrified soda, potash and a little manganese to correct the green — these were the whole of it, and the proportions were held to be <em>secret</em> rather than difficult.<sup class=\"noteref\" data-n=\"18\">18</sup>" },
+    { "type": "block_quote",
+      "uncertain": ["Barovier"],
+      "text": "Let no man of the Barovier house carry the method beyond the lagoon, on pain of the loss of his right hand." },
+    { "type": "paragraph", "continues": true,
+      "text": "Whether that penalty was ever exacted is unclear. The archive records only that in the spring of 1454 three men left for Antwerp and did not" }
+  ]
+}

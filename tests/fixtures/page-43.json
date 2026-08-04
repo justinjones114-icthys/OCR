@@ -1,0 +1,18 @@
+{
+  "source": "FIXTURE-0001.jpg",
+  "side": "R",
+  "folio": 43,
+  "order": 2,
+  "blocks": [
+    { "type": "running_head", "text": "FURNACE AND BATCH" },
+    { "type": "folio", "text": "43" },
+    { "type": "paragraph", "continued": true,
+      "text": "return.<sup class=\"noteref\" data-n=\"19\">19</sup> The Antwerp glass of the following decade is, to a trained eye, unmistakably Venetian." },
+    { "type": "heading", "text": "A NOTE" },
+    { "type": "paragraph",
+      "text": "The reader will notice that none of this appears in the standard accounts, which rely on the [illegible] inventories rather than the guild books themselves." },
+    { "type": "note", "n": 17, "text": "Guild records, Murano, vol. iv, fol. 212." },
+    { "type": "note", "n": 18, "text": "The manganese is first attested in 1443." },
+    { "type": "note", "n": 19, "text": "Antwerp customs roll, 1454." }
+  ]
+}
