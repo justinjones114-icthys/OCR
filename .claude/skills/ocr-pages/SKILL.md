@@ -26,13 +26,27 @@ skill is about those two things.
 ## Workflow
 
 1. **Split** any two-page spread into single pages (`scripts/split_spread.py`).
-2. **Look** at each page image and transcribe it into page JSON, one file per
-   page, following the rules below.
-3. **Render** the JSON into per-page and concatenated HTML
+2. **Flatten** each page (`scripts/dewarp.py`) — required for the local-engine
+   path, optional when you are reading the image yourself.
+3. **Recognize**: either look at the page image and transcribe it directly, or
+   run a local OCR engine (`scripts/ocr_engines.py`). Either way the output is
+   page JSON, one file per page, following the rules below.
+4. **Render** the JSON into per-page and concatenated HTML
    (`scripts/render_html.py`).
 
-Steps 1 and 3 are deterministic and belong in the scripts — don't reimplement
-them inline. Step 2 is the judgment, and it's yours.
+Steps 1, 2 and 4 are deterministic and belong in the scripts — don't
+reimplement them inline. Step 3 is the judgment.
+
+### Choosing between reading it yourself and running an engine
+
+Reading the image directly is far more accurate, especially on superscripts and
+typographic punctuation, and it needs no dewarping. Prefer it for a handful of
+pages.
+
+Reach for a local engine when the volume is large, when the pages must not
+leave the machine, or when the material is under copyright and bulk
+reproduction through a hosted model is not appropriate. The tradeoff is real
+and measured — see the benchmark section below.
 
 ## Step 1 — Split
 
@@ -196,7 +210,34 @@ capture sequence.
 
 Full field reference: `references/schema.json`.
 
-## Step 3 — Render
+## Step 3b — Local engines, and picking one
+
+```bash
+python scripts/dewarp.py pages/*.jpg --out flat/
+python scripts/bench.py --raw pages/ --flat flat/ --expect-noterefs 82-92
+```
+
+`bench.py` compares engines on your own pages without needing a reference
+transcription — the thing nobody has, and the reason engine choice usually gets
+made on impressions. It scores recall of note markers you already know are on
+the spread, pairwise agreement between engines, and the share of output tokens
+that are real words.
+
+Measured on one photographed spread, Tesseract before and after dewarping:
+
+| config | dictionary rate | note markers | seconds |
+|---|---|---|---|
+| `tesseract/raw` | 85.7% | 0 / 11 | 14.4 |
+| `tesseract/flat` | 94.5% | 7 / 11 | 5.3 |
+
+Two things follow. **Dewarping is not optional for local engines** — it is the
+difference between finding no markers and most of them, and it makes the engine
+nearly three times faster because it stops fighting the geometry. And
+**Tesseract is marginal on superscripts even flattened**: 7 of 11, with false
+positives. If note references matter to you, budget for a local vision model or
+plan to review every marker.
+
+## Step 4 — Render
 
 ```bash
 python scripts/render_html.py pages/ --out build/
