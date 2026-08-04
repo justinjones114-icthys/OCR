@@ -234,22 +234,40 @@ def run_surya(image: Path) -> Page:
         predictions = predictor([img], det_predictor=_SURYA_CACHE["det"])
     elapsed = time.perf_counter() - started
 
-    words, lines = [], []
-    for line_no, line in enumerate(predictions[0].text_lines):
-        lines.append(line.text)
-        x0, y0, x1, y1 = [int(v) for v in line.bbox]
-        # Surya returns whole lines. Apportion the box across tokens so the
-        # geometric superscript test still has something to work with; it is
-        # coarser than per-word boxes and will under-detect.
-        tokens = line.text.split()
-        if not tokens:
+    # Surya returns layout blocks rather than lines: each carries a label
+    # (Text, SectionHeader, PageHeader, ...), a reading-order index and HTML.
+    # That is more structure than any other engine here gives, and the HTML is
+    # where superscripts survive -- so markers are read from <sup> rather than
+    # reconstructed from geometry.
+    page_result = predictions[0]
+    blocks = sorted(page_result.blocks, key=lambda b: getattr(b, "reading_order", 0))
+
+    fragments, words, noterefs = [], [], set()
+    for order, block in enumerate(blocks):
+        if getattr(block, "skipped", False) or getattr(block, "error", False):
             continue
+        html = getattr(block, "html", "") or ""
+        for match in re.finditer(r"<sup[^>]*>(.*?)</sup>", html, re.S | re.I):
+            digits = re.sub(r"\D", "", match.group(1))
+            if digits and 1 <= len(digits) <= 3:
+                noterefs.add(int(digits))
+
+        plain = re.sub(r"<[^>]+>", "", html)
+        plain = re.sub(r"\s+", " ", plain).strip()
+        if not plain:
+            continue
+        fragments.append(plain)
+
+        bbox = [int(v) for v in getattr(block, "bbox", [0, 0, 0, 0])]
+        x0, y0, x1, y1 = bbox
+        tokens = plain.split()
         step = max(1, (x1 - x0) // max(1, len(tokens)))
-        for i, tok in enumerate(tokens):
-            words.append(
-                Word(tok, x0 + i * step, y0, step, y1 - y0, line=line_no)
-            )
-    return Page(text="\n".join(lines), words=words, seconds=elapsed, engine="surya")
+        for i, token in enumerate(tokens):
+            words.append(Word(token, x0 + i * step, y0, step, max(1, y1 - y0), line=order))
+
+    page = Page(text="\n".join(fragments), words=words, seconds=elapsed, engine="surya")
+    page.noterefs = noterefs
+    return page
 
 
 def vlm_available() -> bool:
