@@ -93,6 +93,7 @@ def main() -> int:
     dictionary = load_dictionary()
 
     flags: dict[str, list[str]] = {}
+    quote_balance: list[tuple[dict, int]] = []
 
     def flag(page: dict, message: str) -> None:
         key = f"folio {page.get('folio')}" if page.get("folio") is not None else f"order {page.get('order')}"
@@ -121,13 +122,18 @@ def main() -> int:
         if not any(b["type"] == "folio" for b in page["blocks"]):
             flag(page, "no printed folio found — ordering falls back to capture sequence")
 
-        # quotes
-        body = text
-        straight = len(re.findall(r'["\']', body))
+        # Straight glyphs are always wrong on a typographically set page, and
+        # that judgement is safe per page.
+        straight = len(re.findall(r'["\']', text))
         if straight:
             flag(page, f"{straight} straight quote glyph(s) survived re-curling")
-        if body.count("“") != body.count("”"):
-            flag(page, f"unbalanced double quotes ({body.count('“')} open, {body.count('”')} close)")
+
+        # Quote *balance*, though, is only meaningful across the document. A
+        # quotation routinely runs over a page break -- the same phenomenon the
+        # continues/continued flags exist for -- leaving one page with an
+        # unclosed open and the next with an unmatched close. Checking per page
+        # flags every such pair as broken. Accumulate instead, and judge below.
+        quote_balance.append((page, text.count("“") - text.count("”")))
 
         # stitching sanity
         for b in page["blocks"]:
@@ -167,6 +173,23 @@ def main() -> int:
             print("  markers strictly consecutive")
     else:
         print("  no note markers found")
+
+    # Quote balance, judged over the whole run. A page ending mid-quotation is
+    # normal; a running total that goes negative means a close arrived with no
+    # open, and a non-zero total at the end means a quotation never closed.
+    running = 0
+    for page, delta in quote_balance:
+        running += delta
+        if running < 0:
+            flag(page, f"closing quote with no opening (running balance {running})")
+            running = 0
+    if running > 0:
+        last = quote_balance[-1][0] if quote_balance else None
+        print(f"  !! {running} quotation(s) opened and never closed")
+        if last is not None:
+            flag(last, f"{running} quotation(s) left open at the end of the run")
+    elif quote_balance:
+        print("  quotes balanced across the run")
 
     # --- verdict --------------------------------------------------------
     print("\nreview queue")
