@@ -223,19 +223,34 @@ made on impressions. It scores recall of note markers you already know are on
 the spread, pairwise agreement between engines, and the share of output tokens
 that are real words.
 
-Measured on one photographed spread, Tesseract before and after dewarping:
+Measured on one photographed spread of dense serif type carrying eleven note
+markers, on a 4-core CPU with no GPU:
 
 | config | dictionary rate | note markers | seconds |
 |---|---|---|---|
 | `tesseract/raw` | 85.7% | 0 / 11 | 14.4 |
-| `tesseract/flat` | 94.5% | 7 / 11 | 5.3 |
+| `tesseract/flat` | 94.5% | 7 / 11, plus 7 false | 5.8 |
+| `surya/flat` | 98.6% | 11 / 11, none false | 564 |
 
-Two things follow. **Dewarping is not optional for local engines** — it is the
-difference between finding no markers and most of them, and it makes the engine
-nearly three times faster because it stops fighting the geometry. And
-**Tesseract is marginal on superscripts even flattened**: 7 of 11, with false
-positives. If note references matter to you, budget for a local vision model or
-plan to review every marker.
+Agreement between the two flattened runs was 90.2%; between raw and flattened
+Tesseract, only 60% — meaning dewarping changed roughly two words in five.
+
+Three things follow.
+
+**Dewarping is not optional for a local engine.** It is the difference between
+finding no markers and finding most of them, and it makes Tesseract nearly
+three times faster because the engine stops fighting the geometry.
+
+**Surya is the one to reach for if note references matter.** It returns layout
+blocks with labels and reading order rather than bare lines, and superscripts
+survive in its per-block HTML, so markers come out exactly right instead of
+being reconstructed from glyph geometry.
+
+**Ignore that seconds column.** Surya is a vision-language model and this was
+CPU-only; on a GPU it is a different measurement entirely. The accuracy columns
+are the ones that transfer. Tesseract remains the sensible choice when there is
+no GPU and no appetite for model downloads — accept that you will be reviewing
+every marker by hand.
 
 ## Step 4 — Render
 
